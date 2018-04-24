@@ -10,12 +10,13 @@
 
 
 // The number of connecting clients to listen to
-#define PENDING_CONNECTIONS 3
+#define PENDING_CONNECTIONS 2
 
 // Struct stores the ip, port, and status of each client
 typedef struct client_node {
   char ipstr[INET_ADDRSTRLEN];
   uint16_t port;
+  int socket;
   bool status;
 } client_node_t;
 
@@ -60,6 +61,7 @@ void initialize_client_array() {
     client_array[i].status = false;
     //client_array[i].ipstr;
     client_array[i].port = 0;
+    client_array[i].socket = 0;
   }
 }
 
@@ -84,11 +86,14 @@ int main(int argc ,char* argv[]) {
       inet_ntop(AF_INET, &client_addr.sin_addr, client_array[clients].ipstr, INET_ADDRSTRLEN);
       // get the client port
       read(client_socket, &(client_array[clients].port), sizeof(uint16_t));
+      // set the socket
+      client_array[clients].socket = client_socket;
     }
   }
 
+  char* msg = "Hello client.\n";
+  write(client_array[0].socket, msg, strlen(msg));
+
   close(server_fd);
   return 0;
-
-
 }
