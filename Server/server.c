@@ -11,7 +11,7 @@
 
 // The number of connecting clients to listen to
 #define PENDING_CONNECTIONS 1
-#define PORT 4446
+#define PORT 4448
 
 // Struct stores the ip, port, and status of each client
 typedef struct client_node {
@@ -73,30 +73,28 @@ int main(int argc ,char* argv[]) {
   // allow n clients to connect
 
   printf("I am before the for loop\n");
-  int clients = 0;
-  for (int clients = 0; clients < PENDING_CONNECTIONS; clients++) {
-    printf("Connection: %d ", clients);
+  int c = 0;
+  for (; c < PENDING_CONNECTIONS; c++) {
     struct sockaddr_in client_addr;
     socklen_t client_addr_length = sizeof(struct sockaddr_in);
     int client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_length);
     if(client_socket == -1) {
-      printf("For Client %d ", clients+1);
+      printf("For Client %d ", c+1);
       perror("Client could not connect");
       exit(2);
-    }
-    // else we connected to a client
-    else {
+    } else {
+      printf("Server accepted new client\n");
       // fill in client info to client_array
-      client_array[clients].status = true;
+      client_array[c].status = true;
       // get the client IP and fill it into the array
-      inet_ntop(AF_INET, &client_addr.sin_addr, client_array[clients].ipstr, INET_ADDRSTRLEN);
+      inet_ntop(AF_INET, &client_addr.sin_addr, client_array[c].ipstr, INET_ADDRSTRLEN);
       // get the client port
-      if (read(client_socket, &(client_array[clients].port), sizeof(uint16_t)) < 0) {
+      if (read(client_socket, &(client_array[c].port), sizeof(uint16_t)) < 0) {
         perror("Incorrect port from client in read");
         exit(2);
       }
       // set the socket
-      client_array[clients].socket = client_socket;
+      client_array[c].socket = client_socket;
     }
     // TODO: Test message
     char* msg = "Hello client.\n";
