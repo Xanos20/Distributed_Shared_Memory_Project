@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define PORT 4444
+#define PORT 4446
 
 int establish_connection(char* input) {
   struct hostent* server_name = gethostbyname(input);
@@ -22,7 +22,7 @@ int establish_connection(char* input) {
   }
   struct sockaddr_in addr = {
     .sin_family = AF_INET,
-    .sin_port = htons(PORT)   // choose first available port
+    .sin_port = htons(PORT)
   };
   // fill in server address
   bcopy((char*)server_name->h_addr, (char*)&addr.sin_addr.s_addr, server_name->h_length);
@@ -46,8 +46,11 @@ int main (int argc, char* argv[]) {
     perror("read failed");
     exit(2);
   }
-
+  printf("check\n");
   printf("Server sent: %s\n", buffer);
+
+  fgets(buffer, 255, stdin);
+  write(client_fd, buffer, strlen(buffer));
 
   close(client_fd);
   return 0;
