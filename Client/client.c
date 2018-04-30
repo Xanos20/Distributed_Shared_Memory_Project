@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#define PORT 4444
 
 int establish_connection(char* input) {
   struct hostent* server_name = gethostbyname(input);
@@ -21,13 +22,13 @@ int establish_connection(char* input) {
   }
   struct sockaddr_in addr = {
     .sin_family = AF_INET,
-    .sin_port = htons(0)   // choose first available port
+    .sin_port = htons(PORT)   // choose first available port
   };
   // fill in server address
   bcopy((char*)server_name->h_addr, (char*)&addr.sin_addr.s_addr, server_name->h_length);
 
-  if(connect(client_socket, (struct sockaddr*)&addr, sizeof(struct sockaddr_in))) {
-    perror("connect failed");
+  if(connect(client_socket, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) != 0) {
+    perror("Connect to server failed: ");
     exit(2);
   }
 
