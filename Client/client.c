@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define PORT 4448
+#define PORT 4449
 
 int establish_connection(char* input) {
   struct hostent* server_name = gethostbyname(input);
@@ -48,8 +48,8 @@ int main (int argc, char* argv[]) {
   }
   printf("check\n");
   printf("Server sent: %s\n", buffer);
-
-  fgets(buffer, 255, stdin);/*
+/*
+  fgets(buffer, 255, stdin);
   if (read(client_fd, buffer, strlen(buffer)) < 0) {
     perror("read failed");
     exit(2);
