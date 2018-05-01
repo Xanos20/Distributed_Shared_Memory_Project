@@ -7,11 +7,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 
 // The number of connecting clients to listen to
-#define PENDING_CONNECTIONS 2
-#define PORT 4449
+#define PENDING_CONNECTIONS 3
+#define PORT 4450
+#define SHARED_ARRAY_SIZE 10
 
 // Struct stores the ip, port, and status of each client
 typedef struct client_node {
@@ -20,8 +22,15 @@ typedef struct client_node {
   bool status;
 } client_node_t;
 
+typedef struct shared_array{
+  int array[SHARED_ARRAY_SIZE];
+  pthread_mutex_t m;
+} shared_array_t;
+
 // Global Values
 client_node_t client_array[PENDING_CONNECTIONS];
+shared_array_t shared_array;
+
 
 /*
   * return the server scoket descriptor
@@ -64,12 +73,29 @@ void initialize_client_array() {
   }
 }
 
+void initialize_shared_array(){
+  for(int i = 0; i < sizeof(shared_array.array); i++) {
+    shared_array.array[i] = i;
+  }
+  pthread_mutex_init(&shared_array.m, NULL);
+}
+
+/*
+ * For all clients, send the updated array
+*/
+void distribute_array() {
+
+}
+
 
 int main(int argc ,char* argv[]) {
+  // create the shared memory region
+  initialize_shared_array();
+
   int server_fd = start_server();
   initialize_client_array();
-  // allow n clients to connect
 
+  // allow n clients to connect
   printf("SERVER UP AND RUNNING\n");
   for (int c = 0; c < PENDING_CONNECTIONS; c++) {
     printf("Server has %d clients\n", c);
@@ -91,13 +117,16 @@ int main(int argc ,char* argv[]) {
     }
     printf("send message\n");
     // TODO: Test message
-    char* msg = "Hello client.\n";
-    if (write(client_array[0].socket, msg, strlen(msg)) < 0) {
+    if (write(client_array[c].socket, shared_array.array, sizeof(int) * SHARED_ARRAY_SIZE) < 0) {
       perror("Write failed");
       exit(2);
     }
-
   }
+
+  // distribute test array to all clients
+  // loop over array and read from each client
+
+
 
 
   close(server_fd);
