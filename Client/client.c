@@ -11,12 +11,8 @@
 #define PORT 4450
 #define SHARED_ARRAY_SIZE 10
 
-typedef struct shared_array{
-  int array[SHARED_ARRAY_SIZE];
-  pthread_mutex_t m;
-} shared_array_t;
 
-shared_array_t shared_array;
+int shared_array[SHARED_ARRAY_SIZE];
 
 int establish_connection(char* input) {
   struct hostent* server_name = gethostbyname(input);
@@ -56,12 +52,19 @@ int main (int argc, char* argv[]) {
     exit(2);
   }
   for(int i = 0; i < SHARED_ARRAY_SIZE; i++){
-    shared_array.array[i] = buffer[i];
+    shared_array[i] = buffer[i];
   }
-  pthread_mutex_init(&shared_array.m, NULL);
 
   for(int i = 0; i < SHARED_ARRAY_SIZE; i++){
-    printf("Server sent: %d\n", shared_array.array[i]);
+    printf("Server sent: %d\n", shared_array[i]);
+  }
+  char buffer[SHARED_ARRAY_SIZE];
+  while(true){
+    fgets(buffer, SHARED_ARRAY_SIZE-1, stdin);
+    if(strcmp(buffer, "quit") == 0){
+      break;
+    }
+    
   }
   // write a test array and send it to other clients
 

@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <poll.h>
 
 
 // The number of connecting clients to listen to
@@ -27,10 +28,16 @@ typedef struct shared_array{
   pthread_mutex_t m;
 } shared_array_t;
 
+typedef struct request_queue {
+  int sockets[PENDING_CONNECTIONS]; // the clients that requested to change shared_array
+  int requests; // number of requests to update shared_array
+  int head; // current position
+} request_queue_t;
+
 // Global Values
 client_node_t client_array[PENDING_CONNECTIONS];
 shared_array_t shared_array;
-
+request_queue_t request_queue;
 
 /*
   * return the server scoket descriptor
@@ -80,10 +87,20 @@ void initialize_shared_array(){
   pthread_mutex_init(&shared_array.m, NULL);
 }
 
+void initialize_request_queue() {
+  for(int i = 0; i < PENDING_CONNECTIONS; i++) {
+    request_queue.sockets[i] = 0;
+    request_queue.requests = 0;
+    request_queue.head = -1;
+  }
+}
+
 /*
  * For all clients, send the updated array
 */
-void distribute_array() {
+void distribute() {
+  char user_input[20];
+  int i = 0;
 
 }
 
@@ -94,6 +111,8 @@ int main(int argc ,char* argv[]) {
 
   int server_fd = start_server();
   initialize_client_array();
+
+
 
   // allow n clients to connect
   printf("SERVER UP AND RUNNING\n");
@@ -122,9 +141,29 @@ int main(int argc ,char* argv[]) {
       exit(2);
     }
   }
+  // TODO:Take requests
+  // Complete requests and update client_array
+  // Distribute the new array to all clients
+  // Figure out a way to quit
 
+
+  // make request_queue_
+  initialize_request_queue();
   // distribute test array to all clients
   // loop over array and read from each client
+  //get all file descriptors and put into new array
+  struct pollfd fds[PENDING_CONNECTIONS];
+  for(int i = 0; i < PENDING_CONNECTIONS; i++){
+    fds[i].fd = client_array[i].socket;
+  }
+  while(true){
+    if(poll(fds, PENDING_CONNECTIONS, 500) < 0) {
+      perror("Poll failed");
+      exit(2);
+    }
+
+  }
+
 
 
 
