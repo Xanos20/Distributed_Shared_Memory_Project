@@ -12,8 +12,8 @@
 
 
 // The number of connecting clients to listen to
-#define PENDING_CONNECTIONS 3
-#define PORT 4450
+#define PENDING_CONNECTIONS 2
+#define PORT 4458
 #define SHARED_ARRAY_SIZE 10
 
 // Struct stores the ip, port, and status of each client
@@ -24,7 +24,7 @@ typedef struct client_node {
 } client_node_t;
 
 typedef struct shared_array{
-  int array[SHARED_ARRAY_SIZE];
+  char array[SHARED_ARRAY_SIZE];
   pthread_mutex_t m;
 } shared_array_t;
 
@@ -45,7 +45,7 @@ request_queue_t request_queue;
 int start_server() {
   // This line of code sets up an internet socket using TCP with no special protocol options.
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (server_fd == -1) {
+  if(server_fd == -1) {
     perror("Establishment of the server socket failed");
     exit(2);
   }
@@ -54,7 +54,7 @@ int start_server() {
   struct sockaddr_in addr;
   addr.sin_addr.s_addr = INADDR_ANY;
   addr.sin_family = AF_INET;
-  addr.sin_port = htons(PORT); // accept connections on port 4444
+  addr.sin_port = htons(PORT);
 
   //Tell the socket what address to listen from
   if(bind(server_fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) != 0) {
@@ -82,9 +82,9 @@ void initialize_client_array() {
 
 void initialize_shared_array(){
   for(int i = 0; i < sizeof(shared_array.array); i++) {
-    shared_array.array[i] = i;
+    shared_array.array[i] = 'a';
   }
-  pthread_mutex_init(&shared_array.m, NULL);
+  //pthread_mutex_init(&shared_array.m, NULL);
 }
 
 void initialize_request_queue() {
@@ -95,14 +95,7 @@ void initialize_request_queue() {
   }
 }
 
-/*
- * For all clients, send the updated array
-*/
-void distribute() {
-  char user_input[20];
-  int i = 0;
 
-}
 
 
 int main(int argc ,char* argv[]) {
@@ -110,13 +103,12 @@ int main(int argc ,char* argv[]) {
   initialize_shared_array();
 
   int server_fd = start_server();
+  // initialize shared data structure
   initialize_client_array();
 
-
-
-  // allow n clients to connect
   printf("SERVER UP AND RUNNING\n");
   for (int c = 0; c < PENDING_CONNECTIONS; c++) {
+    // allow c clients to connect
     printf("Server has %d clients\n", c);
     struct sockaddr_in client_addr;
     socklen_t client_addr_length = sizeof(struct sockaddr_in);
@@ -136,7 +128,7 @@ int main(int argc ,char* argv[]) {
     }
     printf("send message\n");
     // TODO: Test message
-    if (write(client_array[c].socket, shared_array.array, sizeof(int) * SHARED_ARRAY_SIZE) < 0) {
+    if(write(client_array[c].socket, shared_array.array, sizeof(char) * SHARED_ARRAY_SIZE) < 0) {
       perror("Write failed");
       exit(2);
     }
@@ -155,18 +147,54 @@ int main(int argc ,char* argv[]) {
   struct pollfd fds[PENDING_CONNECTIONS];
   for(int i = 0; i < PENDING_CONNECTIONS; i++){
     fds[i].fd = client_array[i].socket;
+    fds[i].events = POLLIN | POLLWRBAND;
+    fds[i].revents = 0;
+    //printf("fd: %d\n", fds[i].fd);
   }
+  int check = 0;
+  int count = 0;
+
   while(true){
-    if(poll(fds, PENDING_CONNECTIONS, 500) < 0) {
+    // continue checking if clients are ready to push changes
+    if((check = poll(fds, PENDING_CONNECTIONS, 5000)) < 0) {
       perror("Poll failed");
       exit(2);
     }
+    if(check == 0){
+      printf("poll\n");
+    }
+    // TODO: might want an if that checks if check == 0
+    for(int i = 0; i < PENDING_CONNECTIONS; i++) {
+      // search revents fields for each fds entry to see if any client is ready to push changes
+      if(fds[i].revents > 0) {
+        //read from socket i
+        int bytes_read = read(client_array[i].socket, shared_array.array, sizeof(char) * SHARED_ARRAY_SIZE);
+        if(bytes_read < 0) {
+          perror("read failed");
+          exit(2);
+        }
+        //write to all other sockets
+        // push changes to all clients including the one that sent changes
+        for(int j = 0; j < PENDING_CONNECTIONS; j++) {
+          //if(j != i) {
+            // don't update the client's array who pushed the changes
+        printf("Distribute\n");
+        if(write(client_array[j].socket, shared_array.array, sizeof(char) * SHARED_ARRAY_SIZE) < 0) {
+          perror("Write failed");
+          exit(2);
+        }
+          //}
+        }
+        // set revents back to 0 to indicate no more changes are ready
+        fds[i].revents = 0;
+        printf("Request %d\n", i);
+      }
 
+    }
+
+    //if(check > 0
+    //printf("%d socket : %d\n", count++, check);
   }
-
-
-
-
 
   close(server_fd);
   return 0;
