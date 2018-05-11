@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-#define PORT 4458
+#define PORT 4444
 #define SHARED_ARRAY_SIZE 10
 
 
@@ -48,8 +48,8 @@ int establish_connection(char* input) {
 
 
 /*
-  * pthread function to update array from server
-*/
+ * pthread function to update array from server
+ */
 void* pull_array(void* arg){
   while(true){
     int bytes_read = read(SERVER_FD, SHARED_ARRAY, sizeof(char) * SHARED_ARRAY_SIZE);
@@ -65,21 +65,25 @@ void* pull_array(void* arg){
 }
 
 /*
-  * pthread function to push updates to server
-*/
+ * pthread function to push updates to server
+ */
 void* push_array(void* arg){
   printf("to change array type SHARED_ARRAY_SIZE letters\n");
+  char buffer[SHARED_ARRAY_SIZE+1];
   while(true){
-    fgets(SHARED_ARRAY, SHARED_ARRAY_SIZE/*-1*/, stdin);
+    fgets(buffer, SHARED_ARRAY_SIZE+1, stdin);
     // TODO: test if the array has been updated correctly
-    /*printf("Array = ");
-    for(int i = 0; i < SHARED_ARRAY_SIZE; i++) {
-      printf("%c", SHARED_ARRAY[i]);
-    }
-    printf("\n");*/
-    if(write(SERVER_FD, SHARED_ARRAY, sizeof(char) * SHARED_ARRAY_SIZE) < 0) {
-      perror("Write failed for push_array");
-      exit(2);
+    printf("Array = ");
+    if(buffer[0] != '\n'){
+      for(int i = 0; i < SHARED_ARRAY_SIZE; i++) {
+        SHARED_ARRAY[i] = buffer[i];
+        printf("%c", SHARED_ARRAY[i]);
+      }
+      printf("\n");
+      if(write(SERVER_FD, SHARED_ARRAY, sizeof(char) * SHARED_ARRAY_SIZE) < 0) {
+        perror("Write failed for push_array");
+        exit(2);
+      }
     }
   }
 }

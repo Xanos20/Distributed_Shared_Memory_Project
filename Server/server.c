@@ -12,8 +12,8 @@
 
 
 // The number of connecting clients to listen to
-#define PENDING_CONNECTIONS 2
-#define PORT 4458
+#define PENDING_CONNECTIONS 4
+#define PORT 4444
 #define SHARED_ARRAY_SIZE 10
 
 // Struct stores the ip, port, and status of each client
@@ -176,14 +176,14 @@ int main(int argc ,char* argv[]) {
         //write to all other sockets
         // push changes to all clients including the one that sent changes
         for(int j = 0; j < PENDING_CONNECTIONS; j++) {
-          //if(j != i) {
+          if(j != i) {
             // don't update the client's array who pushed the changes
         printf("Distribute\n");
         if(write(client_array[j].socket, shared_array.array, sizeof(char) * SHARED_ARRAY_SIZE) < 0) {
           perror("Write failed");
           exit(2);
         }
-          //}
+          }
         }
         // set revents back to 0 to indicate no more changes are ready
         fds[i].revents = 0;
