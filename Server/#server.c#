@@ -138,9 +138,9 @@ int main(int argc ,char* argv[]) {
     for(int i = 0; i < PENDING_CONNECTIONS; i++) {
       // search revents fields for each fds entry to see if any client is ready to push changes
       if(fds[i].revents > 0) {
-        clock_t start, end;
-        double cpu_time_used;
-        start = clock();
+        //clock_t start, end;
+        //double cpu_time_used;
+        //start = clock();
         //read from socket i
         int bytes_read = read(client_array[i].socket, shared_array.array,
                               sizeof(char) * SHARED_ARRAY_SIZE);
@@ -159,8 +159,8 @@ int main(int argc ,char* argv[]) {
             }
           }
         }
-        end = clock();
-        printf("time: %f\n", ((double) (end-start))/CLOCKS_PER_SEC);
+        //end = clock();
+        //printf("time: %f\n", ((double) (end-start))/CLOCKS_PER_SEC);
         // set revents back to 0 to indicate no more changes are ready
         fds[i].revents = 0;
         printf("Request %d\n", i);
